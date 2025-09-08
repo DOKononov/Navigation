@@ -7,6 +7,33 @@
 
 import SwiftUI
 
+@Observable
+class PathStore {
+    var path: NavigationPath { didSet { save() } }
+    
+    private let savePath = URL.documentsDirectory.appending(component: "SavedPath")
+    
+    init() {
+        if let data = try? Data(contentsOf: savePath) {
+            if let decoded = try? JSONDecoder().decode(NavigationPath.CodableRepresentation.self, from: data) {
+                path = NavigationPath(decoded)
+                return
+            }
+        }
+        path = NavigationPath()
+    }
+    
+   private  func save() {
+        guard let representation = path.codable else { return }
+        do {
+            let data = try JSONEncoder().encode(representation)
+            try data.write(to: savePath)
+        } catch {
+            print("failed to save navigation path: \(error)")
+        }
+    }
+}
+
 struct DetailsView: View {
     
     var number: Int
@@ -24,13 +51,13 @@ struct DetailsView: View {
 }
 
 struct ContentView: View {
-    @State private var path = NavigationPath()
+    @State private var pathStore = PathStore()
     
     var body: some View {
-        NavigationStack(path: $path) {
-            DetailsView(number: 0, path: $path)
+        NavigationStack(path: $pathStore.path) {
+            DetailsView(number: 0, path: $pathStore.path)
                 .navigationDestination(for: Int.self) { destination in
-                    DetailsView(number: destination, path: $path)
+                    DetailsView(number: destination, path: $pathStore.path)
                 }
         }
     }
