@@ -7,15 +7,32 @@
 
 import SwiftUI
 
-struct ContentView: View {
+struct DetailsView: View {
+    
+    var number: Int
+    @Binding var path: NavigationPath
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        NavigationLink("Go to random number", value: Int.random(in: 0...1000))
+            .navigationTitle("Current number \(number)")
+            .toolbar {
+                Button("Home") {
+                    path = NavigationPath()
+                }
+            }
+    }
+}
+
+struct ContentView: View {
+    @State private var path = NavigationPath()
+    
+    var body: some View {
+        NavigationStack(path: $path) {
+            DetailsView(number: 0, path: $path)
+                .navigationDestination(for: Int.self) { destination in
+                    DetailsView(number: destination, path: $path)
+                }
         }
-        .padding()
     }
 }
 
